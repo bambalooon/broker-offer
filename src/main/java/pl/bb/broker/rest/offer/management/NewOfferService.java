@@ -39,6 +39,7 @@ public class NewOfferService {
     public Response createNewOffer(                             //check file!
             @FormDataParam("image")final InputStream imageIS,
             @FormDataParam("image")final FormDataContentDisposition imageDetail,
+            @FormDataParam("facility") final String facility,
             @FormDataParam("city") final String city,
             @FormDataParam("description") final String description,
             @FormDataParam("types") final List<FormDataBodyPart> types,
@@ -47,6 +48,7 @@ public class NewOfferService {
             @Context SecurityContext context //context to get username of logged company!
     ) {
         OffersEntity offer = new OffersEntity();
+        offer.setFacility(facility);
         offer.setCity(city);
         offer.setDescription(description);
         String username = context.getUserPrincipal().getName();
