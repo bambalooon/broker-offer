@@ -22,6 +22,9 @@
         <broker-auth.version>1.0</broker-auth.version>
         <broker-db.version>1.0</broker-db.version>
         <broker-offer.version>1.0</broker-offer.version>
+        <java-ee.version>7.0</java-ee.version>
+        <broker-auth.version>1.0</broker-auth.version>
+        <json.version>1.8</json.version>
     </properties>
 
     <repositories>
@@ -56,8 +59,22 @@
     <dependencies>
         <dependency>
             <groupId>pl.bb.broker</groupId>
+            <artifactId>broker-authentication</artifactId>
+            <version>${broker-auth.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>pl.bb.broker</groupId>
             <artifactId>broker-db</artifactId>
             <version>${broker-db.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>${java-ee.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -85,7 +102,7 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>${jersey.version}</version>
+            <version>${json.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -102,8 +119,6 @@
             <version>${apache-io.version}</version>
             <scope>provided</scope>
         </dependency>
-
-
 
     </dependencies>
 

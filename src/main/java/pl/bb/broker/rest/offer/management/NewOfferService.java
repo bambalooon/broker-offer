@@ -8,17 +8,25 @@ import org.hibernate.HibernateException;
 import pl.bb.broker.brokerdb.broker.entities.CompaniesEntity;
 import pl.bb.broker.brokerdb.broker.entities.OfferDetailsEntity;
 import pl.bb.broker.brokerdb.broker.entities.OffersEntity;
+import pl.bb.broker.brokerdb.broker.xml.XmlCollectionWrapper;
 import pl.bb.broker.brokerdb.util.BrokerDBOfferUtil;
+import pl.bb.broker.security.settings.SecurityGroups;
+import pl.bb.broker.security.settings.SecuritySettings;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBElement;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,7 +40,9 @@ import java.util.List;
 
 @Path("/management/new")
 public class NewOfferService {
+    private static final String companyRole = "COMPANY";
 
+    @RolesAllowed(value = NewOfferService.companyRole)
     @POST
     @Path("/site")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -62,6 +72,7 @@ public class NewOfferService {
             return Response.status(500).entity("No company").build();
         }
         offer.setCompany(company);
+        offer.setPosted(new java.sql.Date(new Date().getTime()));
         byte[] imgBytes;
         try {
             imgBytes = IOUtils.toByteArray(imageIS);
@@ -97,6 +108,40 @@ public class NewOfferService {
             return Response.status(500).entity("Hibernate error: "+e.getMessage()).build();
         }
         return Response.status(201).entity("Added!").build();
+    }
+
+    @RolesAllowed(value = NewOfferService.companyRole)
+    @POST
+    @Path("/app")
+    @Consumes(MediaType.APPLICATION_XML)
+    public Response createNewOffers(XmlCollectionWrapper<OffersEntity> xmlOffers,
+                                    @Context SecurityContext context) {
+        String username = context.getUserPrincipal().getName();
+        CompaniesEntity company;
+        try {
+            company = BrokerDBOfferUtil.FACTORY.getCompany(username);
+            if(company==null) {
+                return Response.status(401).entity("No company").build();
+            }
+        } catch (HibernateException e) {
+            return Response.status(500).entity("Company check - Hibernate Exc").build();
+        }
+        String response = "";
+        for(OffersEntity offer : xmlOffers.getItems()) {
+            offer.setCompany(company);
+            for(OfferDetailsEntity detail: offer.getDetails()) {
+                detail.setOffer(offer);
+            }
+            try {
+                BrokerDBOfferUtil.FACTORY.saveOffer(offer);
+            } catch (HibernateException e) {
+                response += "Hibernate error: "+e.getMessage()+"\n";
+            }
+        }
+        if(response.equals("")) {
+            return Response.status(201).entity("Added!").build();
+        }
+        return Response.status(500).entity(response).build();
     }
 
 }
